@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class TheatreResponse {
-    private UUID id;
+    private UUID theatreId;
 
     private String name;
 

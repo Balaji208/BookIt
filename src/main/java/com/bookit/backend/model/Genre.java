@@ -5,6 +5,11 @@ public enum Genre {
     DRAMA,
     COMEDY,
     HORROR,
+    THRILLER,
+    ROMANCE,
     SCI_FI,
-    LOVE
+    ANIMATION,
+    ADVENTURE,
+    CRIME,
+    MYSTERY
 }

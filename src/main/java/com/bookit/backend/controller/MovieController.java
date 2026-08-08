@@ -24,6 +24,8 @@ public class MovieController {
     @Autowired
     private ModelMapper modelMapper;
 
+    // Admin Operations
+
     @PostMapping("/movies")
     public ResponseEntity<MovieResponse> addMovie(@RequestBody MovieRequest movieRequest) {
         MovieResponse movieResponse = movieService.addMovie(movieRequest);
@@ -38,10 +40,23 @@ public class MovieController {
         return new ResponseEntity<>(movieResponse, HttpStatus.OK);
     }
 
+    @DeleteMapping("/movies/{movieId}")
+    public ResponseEntity<MovieResponse> deleteMovie(@PathVariable UUID movieId) {
+        MovieResponse movieResponse = movieService.deleteMovie(movieId);
+        return new ResponseEntity<>(movieResponse, HttpStatus.OK);
+    }
+
+    // Customer operations
+
     @GetMapping("/movies")
     public ResponseEntity<List<MovieResponse>> getAllMovies() {
         List<MovieResponse> movieResponses = movieService.getAllMovies();
         return new ResponseEntity<>(movieResponses, HttpStatus.OK);
     }
 
+    @GetMapping("/movies/{movieId}")
+    public ResponseEntity<MovieResponse> getMovieDetails(@PathVariable UUID movieId) {
+        MovieResponse movieResponse = movieService.getMovieDetails(movieId);
+        return new ResponseEntity<>(movieResponse, HttpStatus.OK);
+    }
 }

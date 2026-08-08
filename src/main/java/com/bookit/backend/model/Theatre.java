@@ -20,7 +20,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "theatres")
+@Table(name = "theatres",
+    uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_theatre_name_city_address",
+                columnNames = {"name", "city", "address"}
+        )
+    })
 public class Theatre {
 
     @Id

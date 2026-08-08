@@ -46,7 +46,7 @@ public class Show {
 
     @NotNull
     @Positive
-    private BigDecimal basePrice;
+    private Double basePrice;
 
 
     @Enumerated(EnumType.STRING)

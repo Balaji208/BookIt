@@ -14,4 +14,8 @@ public interface MovieService {
     MovieResponse updateMovie(MovieRequest movieRequest, UUID movieId);
 
     List<MovieResponse> getAllMovies();
+
+    MovieResponse getMovieDetails(UUID movieId);
+
+    MovieResponse deleteMovie(UUID movieId);
 }

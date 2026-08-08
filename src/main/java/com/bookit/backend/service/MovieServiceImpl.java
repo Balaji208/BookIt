@@ -58,4 +58,19 @@ public class MovieServiceImpl implements MovieService{
            return modelMapper.map(movie, MovieResponse.class);
         }).toList();
     }
+
+    @Override
+    public MovieResponse getMovieDetails(UUID movieId) {
+        Movie savedMovie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", "MovieId", movieId));
+        return modelMapper.map(savedMovie, MovieResponse.class);
+    }
+
+    @Override
+    public MovieResponse deleteMovie(UUID movieId) {
+        Movie savedMovie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", "MovieId", movieId));
+        movieRepository.deleteById(movieId);
+        return modelMapper.map(savedMovie, MovieResponse.class);
+    }
 }
