@@ -1,7 +1,9 @@
 package com.bookit.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,10 +28,11 @@ public class Screen {
     @Column(name = "screen_id")
     private UUID screenId;
 
-    @NotNull
+    @NotBlank
     private String name;
 
     @NotNull
+    @Positive
     @Column(name = "total_seats")
     private Integer totalSeats;
 

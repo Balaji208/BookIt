@@ -1,5 +1,7 @@
-package com.bookit.backend.model;
+package com.bookit.backend.payload;
 
+import com.bookit.backend.model.Genre;
+import com.bookit.backend.model.Language;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,33 +11,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@Entity
+public class MovieResponse {
 
-@Table(name = "movies",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_movie_title_release_date",
-                        columnNames = {"title", "release_date"}
-                )
-        })
-public class Movie {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "movie_id")
     private UUID movieId;
 
     @NotBlank
@@ -45,39 +32,28 @@ public class Movie {
 
     @NotNull
     @Positive
-    @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private Language  language;
+    private Language language;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     private Genre genre;
 
-
-    @Column(name = "release_date")
     private LocalDate releaseDate;
 
     private String certificate;
-    @Column(name = "poster_url")
 
     private String posterUrl;
 
-    private Boolean active = true;
+    @NotNull
+    private Boolean active;
 
 
-    @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
 
 
-    @Column(name = "updated_at")
     @UpdateTimestamp
     private Timestamp updatedAt;
-
-    // Relationships
-    @OneToMany(mappedBy = "movie")
-    private List<Show> shows = new ArrayList<>();
 }

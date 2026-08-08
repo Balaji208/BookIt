@@ -1,4 +1,4 @@
-package com.movievent.backend;
+package com.bookit.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
