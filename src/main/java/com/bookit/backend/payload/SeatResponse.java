@@ -20,7 +20,7 @@ public class SeatResponse {
 
     private String rowLabel;
 
-    private Integer seatNumber;
+    private Integer  seatNumber;
 
     private SeatType seatType;
 

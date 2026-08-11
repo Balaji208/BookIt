@@ -79,7 +79,11 @@ public class ShowServiceImpl implements ShowService{
                 showRequest.getEndTime())) {
             throw new APIException("Given show overlaps with existing show id: ");
         }
-        Show show = modelMapper.map(showRequest, Show.class);
+        Show show = new Show();
+        show.setStartTime(showRequest.getStartTime());
+        show.setEndTime(showRequest.getEndTime());
+        show.setBasePrice(showRequest.getBasePrice());
+        show.setStatus(showRequest.getStatus());
         show.setScreen(screen);
         show.setMovie(movie);
         Show savedShow = showRepository.save(show);
@@ -153,8 +157,6 @@ public class ShowServiceImpl implements ShowService{
                         ));
 
         savedShow.getScreen().getShows().remove(savedShow);
-        savedShow.setScreen(null);
-        savedShow.setMovie(null);
 //        showRepository.delete(savedShow); instead of deleting physically we can turn status as cancelled
         savedShow.setStatus(ShowStatus.CANCELLED);
         return modelMapper.map(savedShow, ShowResponse.class);

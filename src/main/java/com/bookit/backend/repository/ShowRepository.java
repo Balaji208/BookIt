@@ -24,9 +24,9 @@ public interface ShowRepository extends JpaRepository<Show, UUID> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime
     );
-    @Query("SELECT s FROM Show s WHERE s.movieId = ?1")
+    @Query("SELECT s FROM Show s WHERE s.movie.movieId = ?1")
     List<Show> findShowsByMovieId(UUID movieId);
 
-    @Query("SELECT s FROM Show s WHERE s.theatreId = ?1")
+    @Query("SELECT s FROM Show s JOIN s.screen sc WHERE sc.theatre.theatreId = ?1")
     List<Show> findShowsByTheatreId(UUID theatreId);
 }

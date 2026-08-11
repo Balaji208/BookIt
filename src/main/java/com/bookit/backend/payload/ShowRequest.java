@@ -31,7 +31,7 @@ public class ShowRequest {
 
     @NotNull
     @Positive
-    private Double basePrice;
+    private BigDecimal basePrice;
 
     private ShowStatus status;
 
