@@ -2,9 +2,9 @@ package com.bookit.backend.service;
 
 import com.bookit.backend.payload.MovieRequest;
 import com.bookit.backend.payload.MovieResponse;
+import com.bookit.backend.payload.PageResponse;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -13,7 +13,7 @@ public interface MovieService {
 
     MovieResponse updateMovie(MovieRequest movieRequest, UUID movieId);
 
-    List<MovieResponse> getAllMovies();
+    PageResponse<MovieResponse> getAllMovies(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     MovieResponse getMovieDetails(UUID movieId);
 

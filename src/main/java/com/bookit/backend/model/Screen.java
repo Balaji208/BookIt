@@ -21,7 +21,14 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "screens")
+@Table(
+        name = "screens",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_screen_theatre_name",
+                        columnNames = {"theatreId", "name"}
+                )
+        })
 public class Screen {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

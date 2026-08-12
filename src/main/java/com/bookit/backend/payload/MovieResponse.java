@@ -56,4 +56,7 @@ public class MovieResponse {
 
     @UpdateTimestamp
     private Timestamp updatedAt;
+
+
+
 }

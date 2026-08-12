@@ -21,7 +21,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "seats")
+@Table(
+        name = "seats",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_screen_row_seat",
+                        columnNames = {"screenId, rowLabel, seatNumber"}
+                )
+        }
+)
 public class Seat {
 
     @Id

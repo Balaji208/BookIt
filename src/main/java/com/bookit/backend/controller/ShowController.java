@@ -1,14 +1,16 @@
 package com.bookit.backend.controller;
 
-import com.bookit.backend.model.Show;
-import com.bookit.backend.model.ShowStatus;
+import com.bookit.backend.config.AppConstants;
+import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.payload.ShowRequest;
 import com.bookit.backend.payload.ShowResponse;
 import com.bookit.backend.payload.ShowStatusRequest;
 import com.bookit.backend.service.ShowService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,8 +57,40 @@ public class ShowController {
     // Customer Operations
 
     @GetMapping("/shows")
-    public ResponseEntity<List<ShowResponse>> getAllShows() {
-        List<ShowResponse> showResponses = showService.getAllShows();
+    public ResponseEntity<PageResponse<ShowResponse>> getAllShows(
+            @RequestParam(
+                    name = "pageNumber",
+                    defaultValue = AppConstants.PAGE_NUMBER
+            )
+            @Min(value = 0, message = "Page number cannot be negative")
+            Integer pageNumber,
+
+            @RequestParam(
+                    name = "pageSize",
+                    defaultValue = AppConstants.PAGE_SIZE
+            )
+            @Min(value = 1, message = "Page size must be at least 1")
+            @Max(value = 50, message = "Page size cannot exceed 50")
+            Integer pageSize,
+
+            @RequestParam(
+                    name = "sortBy",
+                    defaultValue = "basePrice"
+            )
+            String sortBy,
+
+            @RequestParam(
+                    name = "sortOrder",
+                    defaultValue = AppConstants.SORT_DIR
+            )
+            String sortOrder
+    ) {
+        PageResponse<ShowResponse> showResponses = showService.getAllShows(
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortOrder
+        );
         return new ResponseEntity<>(showResponses, HttpStatus.OK);
     }
 

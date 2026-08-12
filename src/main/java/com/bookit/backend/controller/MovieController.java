@@ -1,19 +1,22 @@
 package com.bookit.backend.controller;
 
-import com.bookit.backend.model.Movie;
+import com.bookit.backend.config.AppConstants;
 import com.bookit.backend.payload.MovieRequest;
 import com.bookit.backend.payload.MovieResponse;
+import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.service.MovieService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1")
 public class MovieController {
@@ -49,9 +52,45 @@ public class MovieController {
     // Customer operations
 
     @GetMapping("/movies")
-    public ResponseEntity<List<MovieResponse>> getAllMovies() {
-        List<MovieResponse> movieResponses = movieService.getAllMovies();
-        return new ResponseEntity<>(movieResponses, HttpStatus.OK);
+    public ResponseEntity<PageResponse<MovieResponse>> getAllMovies(
+
+            @RequestParam(
+                    name = "pageNumber",
+                    defaultValue = AppConstants.PAGE_NUMBER
+            )
+            @Min(value = 0, message = "Page number cannot be negative")
+            Integer pageNumber,
+
+            @RequestParam(
+                    name = "pageSize",
+                    defaultValue = AppConstants.PAGE_SIZE
+            )
+            @Min(value = 1, message = "Page size must be at least 1")
+            @Max(value = 50, message = "Page size cannot exceed 50")
+            Integer pageSize,
+
+            @RequestParam(
+                    name = "sortBy",
+                    defaultValue = "title"
+            )
+            String sortBy,
+
+            @RequestParam(
+                    name = "sortOrder",
+                    defaultValue = AppConstants.SORT_DIR
+            )
+            String sortOrder
+    ) {
+
+        PageResponse<MovieResponse> movieResponse =
+                movieService.getAllMovies(
+                        pageNumber,
+                        pageSize,
+                        sortBy,
+                        sortOrder
+                );
+
+        return new ResponseEntity<>(movieResponse, HttpStatus.OK);
     }
 
     @GetMapping("/movies/{movieId}")

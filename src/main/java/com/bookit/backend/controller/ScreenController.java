@@ -1,8 +1,12 @@
 package com.bookit.backend.controller;
 
+import com.bookit.backend.config.AppConstants;
+import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.payload.ScreenRequest;
 import com.bookit.backend.payload.ScreenResponse;
 import com.bookit.backend.service.ScreenService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,14 +43,50 @@ public class ScreenController {
 
     // Customer Operations
     @GetMapping("/theatres/{theatreId}/screens")
-    public ResponseEntity<List<ScreenResponse>> getAllScreens(@PathVariable UUID theatreId) {
-        List<ScreenResponse> screenResponses = screenService.getAllScreens(theatreId);
+    public ResponseEntity<PageResponse<ScreenResponse>> getAllScreens(
+            @PathVariable UUID theatreId,
+            @RequestParam(
+                    name = "pageNumber",
+                    defaultValue = AppConstants.PAGE_NUMBER,
+                    required = false
+            )
+            @Min(value = 0, message = "Page number cannot be negative")
+            Integer pageNumber,
+
+            @RequestParam(
+                    name = "pageSize",
+                    defaultValue = AppConstants.PAGE_SIZE,
+                    required = false
+            )
+            @Min(value = 1, message = "Page size must be at least 1")
+            @Max(value = 50, message = "Page size cannot exceed 50")
+            Integer pageSize,
+
+            @RequestParam(
+                    name = "sortBy",
+                    defaultValue = "name",
+                    required = false
+            )
+            String sortBy,
+
+            @RequestParam(
+                    name = "sortOrder",
+                    defaultValue = AppConstants.SORT_DIR,
+                    required = false
+            )
+            String sortOrder
+    ) {
+        PageResponse<ScreenResponse> screenResponses = screenService.getAllScreens(theatreId,
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortOrder);
         return new ResponseEntity<>(screenResponses, HttpStatus.OK);
     }
 
     @GetMapping("/screens/{screenId}")
-    public ResponseEntity<ScreenResponse> getScreen(@PathVariable UUID screenId) {
-        ScreenResponse screenResponse = screenService.getScreen(screenId);
+    public ResponseEntity<ScreenResponse> getScreenDetails(@PathVariable UUID screenId) {
+        ScreenResponse screenResponse = screenService.getScreenDetails(screenId);
         return new ResponseEntity<>(screenResponse, HttpStatus.OK);
     }
 
