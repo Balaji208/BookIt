@@ -1,6 +1,7 @@
 package com.bookit.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -36,6 +37,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @Size(min = 8)
     private String password;
 
     @Enumerated(EnumType.STRING)
