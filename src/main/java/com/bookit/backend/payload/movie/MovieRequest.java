@@ -1,8 +1,9 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.movie;
 
 import com.bookit.backend.model.Genre;
 import com.bookit.backend.model.Language;
-import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -10,20 +11,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class MovieResponse {
-
-    private UUID movieId;
+public class MovieRequest {
 
     @NotBlank
     private String title;
@@ -35,28 +30,15 @@ public class MovieResponse {
     private Integer durationMinutes;
 
     @NotNull
-    private Language language;
+    private Genre genre;
 
     @NotNull
-    private Genre genre;
+    @Enumerated(EnumType.STRING)
+    private Language language;
 
     private LocalDate releaseDate;
 
     private String certificate;
 
     private String posterUrl;
-
-    @NotNull
-    private Boolean active;
-
-
-    @CreationTimestamp
-    private Timestamp createdAt;
-
-
-    @UpdateTimestamp
-    private Timestamp updatedAt;
-
-
-
 }

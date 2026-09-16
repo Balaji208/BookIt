@@ -1,7 +1,7 @@
 package com.bookit.backend.service;
 
-import com.bookit.backend.payload.MovieRequest;
-import com.bookit.backend.payload.MovieResponse;
+import com.bookit.backend.payload.movie.MovieRequest;
+import com.bookit.backend.payload.movie.MovieResponse;
 import com.bookit.backend.payload.PageResponse;
 import org.springframework.stereotype.Service;
 

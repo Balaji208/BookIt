@@ -23,7 +23,7 @@ public class AuthEntryPoint implements AuthenticationEntryPoint {
         response.getWriter().write("""
             {
                 "status" : 401,
-                "error" : "unauthorized"
+                "error" : "unauthorized",
                 "message" : "Authentication is required to access this resource"
             }        
         """);

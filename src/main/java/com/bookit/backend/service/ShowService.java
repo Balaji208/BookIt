@@ -2,8 +2,8 @@ package com.bookit.backend.service;
 
 import com.bookit.backend.model.ShowStatus;
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.ShowRequest;
-import com.bookit.backend.payload.ShowResponse;
+import com.bookit.backend.payload.show.ShowRequest;
+import com.bookit.backend.payload.show.ShowResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

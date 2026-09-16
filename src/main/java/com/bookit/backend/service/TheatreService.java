@@ -1,8 +1,8 @@
 package com.bookit.backend.service;
 
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.TheatreRequest;
-import com.bookit.backend.payload.TheatreResponse;
+import com.bookit.backend.payload.theatre.TheatreRequest;
+import com.bookit.backend.payload.theatre.TheatreResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.stereotype.Service;

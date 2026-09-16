@@ -1,8 +1,8 @@
 package com.bookit.backend.controller;
 
 import com.bookit.backend.config.AppConstants;
-import com.bookit.backend.payload.MovieRequest;
-import com.bookit.backend.payload.MovieResponse;
+import com.bookit.backend.payload.movie.MovieRequest;
+import com.bookit.backend.payload.movie.MovieResponse;
 import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.service.MovieService;
 import jakarta.validation.constraints.Max;

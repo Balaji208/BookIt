@@ -1,4 +1,4 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.show;
 
 import com.bookit.backend.model.ShowStatus;
 import jakarta.validation.constraints.NotNull;

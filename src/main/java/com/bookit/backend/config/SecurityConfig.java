@@ -37,7 +37,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authEntryPoint))
+                        // 401 Unauthorized: Triggers via AuthEntryPoint when the user has NO token/identity
+                        .authenticationEntryPoint(authEntryPoint)
+
+                        // 403 Forbidden: Triggers when the user is logged in (CUSTOMER) but lacks the required role (ADMIN)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN); // 403 Status
+                            response.setContentType("application/json");
+                            response.getWriter().write("""
+                                    {
+                                        "status" : 403,
+                                        "error" : "Forbidden",
+                                        "message" : "Access Denied: You do not have the required administrative permissions"
+                                    }
+                                """);
+                            })
+                )
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(
@@ -45,46 +60,51 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         // Authentication
-                        .requestMatchers("/api/v2/auth/**")
+                        .requestMatchers("/api/*/auth/**")
                         .permitAll()
 
                         // Public read APIs
-                        .requestMatchers(HttpMethod.GET, "/api/v2/movies/**")
+                        .requestMatchers(HttpMethod.GET, "/api/*/movies", "/api/*/movies/", "/api/*/movies/**")
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v2/theatres/**")
+                        .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/", "/api/*/theatres/**")
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v2/screens/**")
+                        .requestMatchers(HttpMethod.GET, "/api/*/screens", "/api/*/screens/", "/api/*/screens/**")
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v2/seats/**")
+                        .requestMatchers(HttpMethod.GET, "/api/*/seats", "/api/*/seats/", "/api/*/seats/**")
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v2/shows/**")
+
+                        .requestMatchers(HttpMethod.GET, "/api/*/shows", "/api/*/shows/", "/api/*/shows/**")
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v2/users/**")
-                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/*/users")
+                        .hasRole("ADMIN")
 
                         // Admin movie operations
-                        .requestMatchers("/api/v2/movies/**")
+                        .requestMatchers("/api/*/movies/**")
                         .hasRole("ADMIN")
 
                         // Admin theatre operations
-                        .requestMatchers("/api/v2/theatres/**")
+                        .requestMatchers("/api/*/theatres/**")
                         .hasRole("ADMIN")
 
                         // Admin screen operations
-                        .requestMatchers("/api/v2/screens/**")
+                        .requestMatchers("/api/*/screens/**")
                         .hasRole("ADMIN")
 
                         // Admin seat operations
-                        .requestMatchers("/api/v2/seats/**")
+                        .requestMatchers("/api/*/seats/**")
                         .hasRole("ADMIN")
 
                         // Admin show operations
-                        .requestMatchers("/api/v2/shows/**")
+                        .requestMatchers("/api/*/shows/**")
+                        .hasRole("ADMIN")
+
+                        // Admin user operations
+                        .requestMatchers("/api/*/user/**")
                         .hasRole("ADMIN")
 
                         // Everything else requires authentication

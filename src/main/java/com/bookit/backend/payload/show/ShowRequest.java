@@ -1,15 +1,14 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.show;
 
-import com.bookit.backend.model.Language;
 import com.bookit.backend.model.ShowStatus;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,27 +16,23 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ShowResponse {
-
-    private UUID showId;
-
+public class ShowRequest {
+    @NotNull
     private UUID movieId;
-    private String movieTitle;
 
+    @NotNull
     private UUID screenId;
-    private String screenName;
 
-    private UUID theatreId;
-    private String theatreName;
-
+    @NotNull
     private LocalDateTime startTime;
+
+    @NotNull
     private LocalDateTime endTime;
 
+    @NotNull
+    @Positive
     private BigDecimal basePrice;
-
 
     private ShowStatus status;
 
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
 }

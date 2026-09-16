@@ -3,7 +3,7 @@ package com.bookit.backend.service;
 import com.bookit.backend.exception.APIException;
 import com.bookit.backend.exception.ResourceNotFoundException;
 import com.bookit.backend.model.User;
-import com.bookit.backend.payload.UserResponse;
+import com.bookit.backend.payload.user.UserResponse;
 import com.bookit.backend.payload.user.UpdatePasswordRequest;
 import com.bookit.backend.payload.user.UpdateProfileRequest;
 import com.bookit.backend.repository.UserRepository;
@@ -40,21 +40,17 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserResponse getUserProfileDetails() {
-
         User user = getCurrentUser();
-
+        log.info("User details fetched successfully for id : {}", user.getUserId() );
         return modelMapper.map(user, UserResponse.class);
-
     }
 
     @Transactional
     @Override
     public UserResponse updateUserDetails(UpdateProfileRequest request) {
 
-
-
         User user = getCurrentUser();
-
+        log.info("Updating User details for id : {}", user.getUserId());
         if(userRepository.existsByEmailAndUserIdNotAndActiveTrue(
                 request.getEmail(),
                 user.getUserId())) {
@@ -64,6 +60,8 @@ public class UserServiceImpl implements UserService{
         user.setName(request.getName());
 
         userRepository.save(user);
+
+        log.info("User details updated successfully :{}", user.getUserId());
         return modelMapper.map(user, UserResponse.class);
 
     }
@@ -73,6 +71,7 @@ public class UserServiceImpl implements UserService{
     public String updateUserPassword(UpdatePasswordRequest request) {
 
         User user = getCurrentUser();
+        log.info("Updating user password for user : {}", user.getUserId());
         if(!passwordEncoder.matches(
                 request.getCurrentPassword(),
                 user.getPassword())) {
@@ -110,7 +109,6 @@ public class UserServiceImpl implements UserService{
 
         if(userPage.isEmpty()) {
             log.warn("No users found!");
-            throw new APIException("No users are there!");
         }
         List<UserResponse> userResponses = userPage
                 .stream()
@@ -127,7 +125,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserResponse getUserDetails(UUID userId) {
-        User user = userRepository.findByUserIdAndActiveNot(userId, false)
+        User user = userRepository.findByUserIdAndActiveTrue(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User",
                         "UserId",

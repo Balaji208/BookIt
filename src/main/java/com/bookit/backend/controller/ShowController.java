@@ -2,14 +2,13 @@ package com.bookit.backend.controller;
 
 import com.bookit.backend.config.AppConstants;
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.ShowRequest;
-import com.bookit.backend.payload.ShowResponse;
-import com.bookit.backend.payload.ShowStatusRequest;
+import com.bookit.backend.payload.show.ShowRequest;
+import com.bookit.backend.payload.show.ShowResponse;
+import com.bookit.backend.payload.show.ShowStatusRequest;
 import com.bookit.backend.service.ShowService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

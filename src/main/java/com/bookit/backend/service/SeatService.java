@@ -1,13 +1,12 @@
 package com.bookit.backend.service;
 
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.SeatRequest;
-import com.bookit.backend.payload.SeatResponse;
+import com.bookit.backend.payload.seat.SeatRequest;
+import com.bookit.backend.payload.seat.SeatResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service

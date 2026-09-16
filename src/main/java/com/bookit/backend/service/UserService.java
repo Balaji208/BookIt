@@ -1,7 +1,6 @@
 package com.bookit.backend.service;
 
-import com.bookit.backend.model.User;
-import com.bookit.backend.payload.UserResponse;
+import com.bookit.backend.payload.user.UserResponse;
 import com.bookit.backend.payload.user.UpdatePasswordRequest;
 import com.bookit.backend.payload.user.UpdateProfileRequest;
 import org.springframework.stereotype.Service;

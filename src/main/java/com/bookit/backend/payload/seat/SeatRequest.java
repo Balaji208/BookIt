@@ -1,4 +1,4 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.seat;
 
 import com.bookit.backend.model.SeatType;
 import jakarta.validation.constraints.NotBlank;

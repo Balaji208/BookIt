@@ -1,8 +1,7 @@
 package com.bookit.backend.controller;
 
 import com.bookit.backend.config.AppConstants;
-import com.bookit.backend.model.User;
-import com.bookit.backend.payload.UserResponse;
+import com.bookit.backend.payload.user.UserResponse;
 import com.bookit.backend.payload.user.UpdatePasswordRequest;
 import com.bookit.backend.payload.user.UpdateProfileRequest;
 import com.bookit.backend.service.UserService;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,7 +44,6 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers(
             @RequestParam(
@@ -85,7 +82,7 @@ public class UserController {
         return new ResponseEntity<>(userResponses, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserResponse> getUserDetails(
             @PathVariable UUID userId) {
@@ -93,7 +90,6 @@ public class UserController {
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/users/{userId}/status")
     public ResponseEntity<String> updateStatus(
             @PathVariable UUID userId,

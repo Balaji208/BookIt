@@ -1,12 +1,10 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.theatre;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @AllArgsConstructor
 @NoArgsConstructor

@@ -1,8 +1,8 @@
 package com.bookit.backend.service;
 
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.ScreenRequest;
-import com.bookit.backend.payload.ScreenResponse;
+import com.bookit.backend.payload.screen.ScreenRequest;
+import com.bookit.backend.payload.screen.ScreenResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.stereotype.Service;

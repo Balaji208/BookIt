@@ -7,8 +7,8 @@ import com.bookit.backend.model.Screen;
 import com.bookit.backend.model.Show;
 import com.bookit.backend.model.ShowStatus;
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.ShowRequest;
-import com.bookit.backend.payload.ShowResponse;
+import com.bookit.backend.payload.show.ShowRequest;
+import com.bookit.backend.payload.show.ShowResponse;
 import com.bookit.backend.repository.MovieRepository;
 import com.bookit.backend.repository.ScreenRepository;
 import com.bookit.backend.repository.ShowRepository;
@@ -22,7 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 

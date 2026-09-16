@@ -1,6 +1,5 @@
-package com.bookit.backend.payload;
+package com.bookit.backend.payload.theatre;
 
-import com.bookit.backend.model.SeatType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,16 +12,18 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SeatResponse {
-    private UUID seatId;
+public class TheatreResponse {
+    private UUID theatreId;
 
-    private UUID screenId;
+    private String name;
 
-    private String rowLabel;
+    private String city;
 
-    private Integer  seatNumber;
+    private String address;
 
-    private SeatType seatType;
+    private Double latitude;
+
+    private Double longitude;
 
     private Boolean active;
 

@@ -2,8 +2,8 @@ package com.bookit.backend.controller;
 
 import com.bookit.backend.config.AppConstants;
 import com.bookit.backend.payload.PageResponse;
-import com.bookit.backend.payload.ScreenRequest;
-import com.bookit.backend.payload.ScreenResponse;
+import com.bookit.backend.payload.screen.ScreenRequest;
+import com.bookit.backend.payload.screen.ScreenResponse;
 import com.bookit.backend.service.ScreenService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
