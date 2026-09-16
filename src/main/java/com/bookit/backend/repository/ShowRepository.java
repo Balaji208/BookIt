@@ -82,4 +82,10 @@ public interface ShowRepository extends JpaRepository<Show, UUID> {
             Pageable pageable,
             ShowStatus status
     );
+
+    Optional<Show> findByIdAndStatus(UUID showId, ShowStatus showStatus);
+
+    boolean existsByIdAndStatusNot(UUID showId, ShowStatus showStatus);
+
+    Optional<Show> findByShowIdAndStatus(UUID showId, ShowStatus showStatus);
 }

@@ -1,5 +1,6 @@
 package com.bookit.backend.service;
 
+import com.bookit.backend.model.User;
 import com.bookit.backend.payload.user.UserResponse;
 import com.bookit.backend.payload.user.UpdatePasswordRequest;
 import com.bookit.backend.payload.user.UpdateProfileRequest;
@@ -26,4 +27,6 @@ public interface UserService {
     UserResponse getUserDetails(UUID userId);
 
     String updateUserStatus(UUID userId, boolean status);
+
+    User getCurrentUser();
 }

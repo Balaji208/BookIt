@@ -149,6 +149,7 @@ public class UserServiceImpl implements UserService{
         return "Status changed successfully";
     }
 
+    @Override
     public User getCurrentUser() {
         Authentication authentication =
                 SecurityContextHolder
