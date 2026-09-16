@@ -16,7 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,59 +34,66 @@ public class BookingServiceImpl implements BookingService {
     private final UserService userService;
     private final SeatRepository seatRepository;
 
+
     @Transactional
     @Override
     public BookingResponse createBooking(BookingCreateRequest request) {
 
-        // 1. Validate Request
+        // 1. Validate the booking request
         validateRequest(request);
 
         UUID showId = request.getShowId();
         List<UUID> seatIds = request.getSeatIds();
 
-        // 2. Check for valid show
+        // 2. Get the show only if it is currently bookable
         Show show = getBookableShow(showId);
 
-        // 3. Get Current User
+        // 3. Get the authenticated customer
         User user = userService.getCurrentUser();
 
-        // 4. Get Booked seat ids for requested show
-        Set<UUID> bookedSeatIds = getBookedSeatIds(showId);
-
-        // 5. Validate the requested seats vs booked seats for availability
-        List<Seat> seats = getAndValidateSeats(
+        // 4. Validate requested seats and fetch them in one DB query
+        List<Seat> seats = validateAndPrepareSeats(
                 seatIds,
-                show,
-                bookedSeatIds
+                show
         );
 
-        // 6. Calculate the seat prices based on seat type
-        List<BigDecimal> seatPrices =
-                calculateSeatPrices(seats, show.getBasePrice());
+        // 5. Create Booking and BookingSeat records
+        List<BookingSeat> bookingSeats = new ArrayList<>();
 
-        // 7. Calculate total amount
-        BigDecimal totalAmount =
-                calculateTotalAmount(seatPrices);
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
-        // 8. Create Booking object
-        Booking booking =
-                createAndSaveBooking(
-                        user,
-                        show,
-                        totalAmount
-                );
+        for (Seat seat : seats) {
 
-        // 9. Create BookingSeat object after saving Booking obj ( because BookingSeat has booking_id as FK)
-        List<BookingSeat> bookingSeats =
-                createBookingSeats(
-                        booking,
-                        seats,
-                        seatPrices
-                );
+            BigDecimal seatPrice = calculateSeatPrice(
+                    seat,
+                    show.getBasePrice()
+            );
+
+            BookingSeat bookingSeat = new BookingSeat();
+
+            bookingSeat.setSeat(seat);
+            bookingSeat.setPrice(seatPrice);
+
+            bookingSeats.add(bookingSeat);
+
+            totalAmount = totalAmount.add(seatPrice);
+        }
+
+        Booking booking = createBooking(
+                user,
+                show,
+                totalAmount
+        );
+
+        // BookingSeat contains booking_id as FK,
+        // therefore Booking must exist before BookingSeat records.
+        for (BookingSeat bookingSeat : bookingSeats) {
+            bookingSeat.setBooking(booking);
+        }
 
         bookingSeatRepository.saveAll(bookingSeats);
 
-        // 10. Build and return responses
+        // 6. Build the API response
         return buildBookingResponse(
                 booking,
                 bookingSeats
@@ -90,6 +101,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
+    /**
+     * Validates basic request-level constraints.
+     *
+     * These checks do not require database access.
+     */
     private void validateRequest(BookingCreateRequest request) {
 
         if (request == null) {
@@ -104,15 +120,13 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        if (request.getSeatIds() == null ||
-                request.getSeatIds().isEmpty()) {
+        List<UUID> seatIds = request.getSeatIds();
 
+        if (seatIds == null || seatIds.isEmpty()) {
             throw new APIException(
                     "At least one seat must be selected"
             );
         }
-
-        List<UUID> seatIds = request.getSeatIds();
 
         if (seatIds.contains(null)) {
             throw new APIException(
@@ -120,9 +134,9 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        if (seatIds.size() !=
-                new HashSet<>(seatIds).size()) {
-
+        // The same seat should not appear twice
+        // in a single booking request.
+        if (seatIds.size() != new HashSet<>(seatIds).size()) {
             throw new APIException(
                     "Duplicate seat IDs are not allowed"
             );
@@ -130,6 +144,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
+    /**
+     * Retrieves a show only when it is in SCHEDULED state.
+     *
+     * CANCELLED and COMPLETED shows cannot be booked.
+     */
     private Show getBookableShow(UUID showId) {
 
         return showRepository
@@ -140,7 +159,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> {
 
                     log.debug(
-                            "Scheduled show with id {} not found",
+                            "Bookable show with id {} not found",
                             showId
                     );
 
@@ -153,26 +172,35 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private Set<UUID> getBookedSeatIds(UUID showId) {
-
-        return new HashSet<>(
-                bookingSeatRepository.fetchBookedSeatIds(showId)
-        );
-    }
-
-
-    private List<Seat> getAndValidateSeats(
+    /**
+     * Fetches all requested seats in a single database query
+     * and validates their existence, availability and screen.
+     *
+     * This avoids querying the database once for every seat.
+     */
+    private List<Seat> validateAndPrepareSeats(
             List<UUID> seatIds,
-            Show show,
-            Set<UUID> bookedSeatIds
+            Show show
     ) {
 
+        // Fetch all active requested seats in one query.
         List<Seat> seats =
                 seatRepository.findAllBySeatIdInAndActiveTrue(
                         seatIds
                 );
 
-        validateAllSeatsExist(seatIds, seats);
+        // Batch queries can return fewer records than requested.
+        // Therefore explicitly verify that every requested seat exists.
+        validateSeatExistence(seatIds, seats);
+
+        // Fetch already booked seats for this show.
+        // Only seats from CONFIRMED bookings are considered occupied.
+        Set<UUID> bookedSeatIds =
+                new HashSet<>(
+                        bookingSeatRepository.fetchBookedSeatIds(
+                                show.getShowId()
+                        )
+                );
 
         UUID showScreenId =
                 show.getScreen().getScreenId();
@@ -181,29 +209,67 @@ public class BookingServiceImpl implements BookingService {
 
             UUID seatId = seat.getSeatId();
 
-            validateSeatAvailability(
-                    seatId,
-                    bookedSeatIds
-            );
+            // A cancelled booking does not occupy the seat.
+            if (bookedSeatIds.contains(seatId)) {
 
-            validateSeatBelongsToShow(
-                    seat,
-                    showScreenId
-            );
+                log.debug(
+                        "Seat {} is already booked for show {}",
+                        seatId,
+                        show.getShowId()
+                );
+
+                throw new APIException(
+                        "Seat with id : " +
+                                seatId +
+                                " is already booked"
+                );
+            }
+
+            // A seat belongs to a physical screen.
+            // A show also belongs to a screen.
+            // Therefore the selected seat must belong
+            // to the show's screen.
+            UUID seatScreenId =
+                    seat.getScreen().getScreenId();
+
+            if (!showScreenId.equals(seatScreenId)) {
+
+                log.debug(
+                        "Seat {} belongs to screen {}, " +
+                                "but show {} belongs to screen {}",
+                        seatId,
+                        seatScreenId,
+                        show.getShowId(),
+                        showScreenId
+                );
+
+                throw new APIException(
+                        "Seat with id : " +
+                                seatId +
+                                " does not belong to this show"
+                );
+            }
         }
 
         return seats;
     }
 
 
-    private void validateAllSeatsExist(
+    /**
+     * Ensures that every requested seat was actually
+     * found in the database.
+     *
+     * findAllBySeatIdInAndActiveTrue() may return fewer
+     * records than the number of requested IDs.
+     */
+    private void validateSeatExistence(
             List<UUID> requestedSeatIds,
             List<Seat> foundSeats
     ) {
 
         Set<UUID> foundSeatIds =
                 foundSeats.stream()
-                        .map((Seat::getSeatId))
+                        .map(Seat::getSeatId)
                         .collect(Collectors.toSet());
 
         for (UUID seatId : requestedSeatIds) {
@@ -225,83 +291,13 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private void validateSeatAvailability(
-            UUID seatId,
-            Set<UUID> bookedSeatIds
-    ) {
-
-        if (bookedSeatIds.contains(seatId)) {
-
-            log.debug(
-                    "Seat {} is already booked",
-                    seatId
-            );
-
-            throw new APIException(
-                    "Seat with id : " +
-                            seatId +
-                            " is already booked"
-            );
-        }
-    }
-
-
-    private void validateSeatBelongsToShow(
-            Seat seat,
-            UUID showScreenId
-    ) {
-
-        UUID seatScreenId =
-                seat.getScreen().getScreenId();
-
-        if (!showScreenId.equals(seatScreenId)) {
-
-            log.debug(
-                    "Seat {} belongs to screen {}, " +
-                            "but show belongs to screen {}",
-                    seat.getSeatId(),
-                    seatScreenId,
-                    showScreenId
-            );
-
-            throw new APIException(
-                    "Seat with id : " +
-                            seat.getSeatId() +
-                            " does not belong to this show"
-            );
-        }
-    }
-
-
-    private List<BigDecimal> calculateSeatPrices(
-            List<Seat> seats,
-            BigDecimal basePrice
-    ) {
-
-        return seats.stream()
-                .map(seat ->
-                        computePrice(
-                                seat.getSeatType(),
-                                basePrice
-                        )
-                )
-                .toList();
-    }
-
-
-    private BigDecimal calculateTotalAmount(
-            List<BigDecimal> seatPrices
-    ) {
-
-        return seatPrices.stream()
-                .reduce(
-                        BigDecimal.ZERO,
-                        BigDecimal::add
-                );
-    }
-
-
-    private Booking createAndSaveBooking(
+    /**
+     * Creates and persists the Booking entity.
+     *
+     * The total amount is stored as a snapshot of the
+     * price paid when the booking was created.
+     */
+    private Booking createBooking(
             User user,
             Show show,
             BigDecimal totalAmount
@@ -318,31 +314,61 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private List<BookingSeat> createBookingSeats(
-            Booking booking,
-            List<Seat> seats,
-            List<BigDecimal> seatPrices
+    /**
+     * Calculates the price of one seat based on its type.
+     *
+     * The calculated value is stored in BookingSeat so
+     * that historical booking prices are preserved.
+     */
+    private BigDecimal calculateSeatPrice(
+            Seat seat,
+            BigDecimal basePrice
     ) {
 
-        List<BookingSeat> bookingSeats =
-                new ArrayList<>();
-
-        for (int i = 0; i < seats.size(); i++) {
-
-            BookingSeat bookingSeat =
-                    new BookingSeat();
-
-            bookingSeat.setBooking(booking);
-            bookingSeat.setSeat(seats.get(i));
-            bookingSeat.setPrice(seatPrices.get(i));
-
-            bookingSeats.add(bookingSeat);
+        if (basePrice == null) {
+            throw new APIException(
+                    "Base price cannot be null"
+            );
         }
 
-        return bookingSeats;
+        return switch (seat.getSeatType()) {
+
+            case REGULAR ->
+                    basePrice;
+
+            case PREMIUM ->
+                    basePrice.multiply(
+                            new BigDecimal("1.30")
+                    );
+
+            case VIP ->
+                    basePrice.multiply(
+                            new BigDecimal("1.50")
+                    );
+
+            case RECLINER ->
+                    basePrice.multiply(
+                            new BigDecimal("1.10")
+                    );
+
+            case null ->
+                    throw new APIException(
+                            "Seat type cannot be null"
+                    );
+
+            default ->
+                    throw new APIException(
+                            "Invalid seat type: " +
+                                    seat.getSeatType()
+                    );
+        };
     }
 
 
+    /**
+     * Converts the persisted booking and its seats
+     * into the API response DTO.
+     */
     private BookingResponse buildBookingResponse(
             Booking booking,
             List<BookingSeat> bookingSeats
@@ -373,7 +399,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<BookingSeatResponse> seatResponses =
                 bookingSeats.stream()
-                        .map(this::mapToBookingSeatResponse)
+                        .map(this::mapBookingSeatResponse)
                         .toList();
 
         response.setSeats(seatResponses);
@@ -382,7 +408,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private BookingSeatResponse mapToBookingSeatResponse(
+    /**
+     * Maps a BookingSeat entity to its response DTO.
+     */
+    private BookingSeatResponse mapBookingSeatResponse(
             BookingSeat bookingSeat
     ) {
 
@@ -413,23 +442,4 @@ public class BookingServiceImpl implements BookingService {
 
         return response;
     }
-    private BigDecimal computePrice(SeatType seatType, BigDecimal basePrice) {
-        if (basePrice == null) {
-            throw new APIException("Base price cannot be null");
-        }
-
-        // Determine the percentage premium based on the seat type
-        BigDecimal multiplier = switch (seatType) {
-            case PREMIUM  -> new BigDecimal("1.3");   // basePrice + 30%
-            case VIP      -> new BigDecimal("1.5");   // basePrice + 50%
-            case RECLINER -> new BigDecimal("1.1");   // basePrice + 10%
-            case REGULAR  -> BigDecimal.ONE;          // 1.0 (No change)
-            case null     -> throw new APIException("Seat type cannot be null");
-            default       -> throw new APIException("Invalid Seat type: " + seatType);
-        };
-
-        // Calculate final price: basePrice * multiplier
-        return basePrice.multiply(multiplier);
-    }
-
 }
