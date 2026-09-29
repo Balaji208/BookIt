@@ -70,6 +70,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/", "/api/*/theatres/**")
                         .permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/", "/api/*/theatres/**")
+                        .permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/*/screens", "/api/*/screens/", "/api/*/screens/**")
                         .permitAll()
 
@@ -107,6 +110,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/*/user/**")
                         .hasRole("ADMIN")
 
+                        // Customer booking operation
+                        .requestMatchers(HttpMethod.GET, "/api/*/bookings", "/api/*/bookings/", "/api/*/bookings/**")
+                        .hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/*/bookings", "/api/*/bookings/", "/api/*/bookings/**")
+                        .hasRole("CUSTOMER")
                         // Everything else requires authentication
                         .anyRequest()
                         .authenticated()

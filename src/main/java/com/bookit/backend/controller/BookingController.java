@@ -7,10 +7,10 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v3")
@@ -21,9 +21,28 @@ public class BookingController {
 
     @PostMapping("/bookings")
     public ResponseEntity<BookingResponse> createBooking(
-            @Valid @PathVariable BookingCreateRequest request) {
+            @Valid @RequestBody BookingCreateRequest request) {
         BookingResponse bookingResponse = bookingService.createBooking(request);
         return new ResponseEntity<>(bookingResponse, HttpStatus.CREATED);
     }
 
+    @GetMapping("/bookings")
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        List<BookingResponse> bookings = bookingService.getAllBookings();
+        return new ResponseEntity<>(bookings, HttpStatus.OK);
+    }
+
+    @GetMapping("/bookings/{bookingId}")
+    public ResponseEntity<BookingResponse> getBookingDetails(@PathVariable UUID bookingId) {
+        BookingResponse bookingResponse =
+                bookingService.getBookingDetails(bookingId);
+        return new ResponseEntity<>(bookingResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/api/v3/bookings/{bookingId}/cancel")
+    public ResponseEntity<String> cancelBooking(@PathVariable UUID bookingId) {
+        String cancellationResponse =
+                bookingService.cancelBooking(bookingId);
+        return new ResponseEntity<>(cancellationResponse, HttpStatus.OK);
+    }
 }

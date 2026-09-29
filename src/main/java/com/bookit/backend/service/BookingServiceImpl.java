@@ -16,11 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,12 +88,241 @@ public class BookingServiceImpl implements BookingService {
         }
 
         bookingSeatRepository.saveAll(bookingSeats);
-
+        System.out.println("Down : " +booking.getCreatedAt());
         // 6. Build the API response
         return buildBookingResponse(
                 booking,
                 bookingSeats
         );
+    }
+
+    @Override
+    public List<BookingResponse> getAllBookings() {
+        // 1. Get the currently authenticated user
+        User user = userService.getCurrentUser();
+
+        UUID userId = user.getUserId();
+
+        // 2. Fetch all bookings for logged-in user
+        List<Booking> bookings = bookingRepository.findByUserUserId(userId);
+
+        // No bookings -> return empty list
+        if (bookings.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 3. Extract all booking IDs
+        List<UUID> bookingIds = bookings.stream()
+                .map((booking) -> booking.getBookingId())
+                .toList();
+
+        // 4. Fetch BookingSeats for ALL bookings in one query
+        List<BookingSeat> bookingSeats =
+                bookingSeatRepository.findByBookingBookingIdIn(
+                        bookingIds
+                );
+
+
+        /*
+         * 5. Group BookingSeats by booking ID.
+         *
+         * Instead of querying the database for every booking:
+         *
+         *     booking 1 -> query
+         *     booking 2 -> query
+         *     booking 3 -> query
+         *     ...
+         *
+         * we already have all BookingSeats in memory.
+         */
+
+        Map<UUID, List<BookingSeat>> bookingSeatMap =
+                bookingSeats.stream()
+                        .collect(Collectors.groupingBy(
+                                bookingSeat ->
+                                        bookingSeat.
+                                                getBooking()
+                                                .getBookingId()
+                        ));
+
+
+        // Convert bookings into response DTOs
+        List<BookingResponse> bookingResponses = new ArrayList<>();
+
+        for(Booking booking : bookings) {
+
+            UUID bookingId = booking.getBookingId();
+
+            List<BookingSeat> bookedSeats =
+                    bookingSeatMap.getOrDefault(
+                            bookingId,
+                            Collections.emptyList()
+                    );
+
+            if (bookedSeats.isEmpty()) {
+                log.debug(
+                        "Booked seats are empty for booking id : {}",
+                        bookingId
+                );
+            }
+            // 4. Convert bookingSeats into DTO response
+            List<BookingSeatResponse> bookingSeatResponses =
+                    bookedSeats.stream()
+                            .map(this::mapBookingSeatResponse)
+                            .toList();
+            // 8. Convert Booking into BookingResponse
+            BookingResponse bookingResponse =
+                    new BookingResponse();
+
+            bookingResponse.setBookingId(bookingId);
+
+            bookingResponse.setShowId(
+                    booking.getShow().getShowId()
+            );
+
+            bookingResponse.setStatus(
+                    booking.getStatus()
+            );
+
+            bookingResponse.setTotalAmount(
+                    booking.getTotalAmount()
+            );
+
+            bookingResponse.setSeats(
+                    bookingSeatResponses
+            );
+
+            bookingResponses.add(bookingResponse);
+        }
+
+        return bookingResponses;
+    }
+
+    @Override
+    public BookingResponse getBookingDetails(UUID bookingId) {
+
+        // 1. Validate booking ID
+        if(bookingId == null) {
+            throw new APIException("Booking Id can't be null to fetch details");
+        }
+
+        // 2. Get currently authenticated user
+        User currentUser = userService.getCurrentUser();
+
+        UUID currentUserId = currentUser.getUserId();
+
+        // 3. Fetch booking
+        Booking booking = bookingRepository.
+                findById(bookingId)
+                .orElseThrow(() -> {
+                    log.debug(
+                            "Booking not found for id : {}",
+                            bookingId
+                    );
+                    return new ResourceNotFoundException(
+                            "Booking",
+                            bookingId.toString(),
+                            "bookingId"
+                    );
+                });
+
+        // 4. Verify booking belongs to current user
+        if (!booking.getUser().getUserId().equals(currentUserId)) {
+            log.debug(
+                    "User {} attempted to access booking {}",
+                    currentUserId,
+                    bookingId
+            );
+
+            throw new ResourceNotFoundException(
+                    "Booking",
+                    bookingId.toString(),
+                    "bookingId"
+            );
+        }
+
+        // 5. Fetch booking seats
+        List<BookingSeat> bookedSeats = bookingSeatRepository.
+                findByBookingBookingId(bookingId);
+
+        if (bookedSeats.isEmpty()) {
+            log.debug(
+                    "Booked seats are empty for booking id : {}",
+                    bookingId
+            );
+        }
+
+        // 6. Build response
+        return buildBookingResponse(
+                booking,
+                bookedSeats
+        );
+    }
+
+    @Transactional
+    @Override
+    public String cancelBooking(UUID bookingId) {
+
+        // 1. Validate Booking Id
+        if(bookingId == null) {
+            throw new APIException("Booking Id can't be null to fetch details");
+        }
+        // 2. Get currently authenticated user
+        User currentUser = userService.getCurrentUser();
+
+        UUID currentUserId = currentUser.getUserId();
+
+        // 3. Fetch booking
+        Booking booking = bookingRepository.
+                findById(bookingId)
+                .orElseThrow(() -> {
+                    log.debug(
+                            "Booking not found for id : {}",
+                            bookingId
+                    );
+                    return new ResourceNotFoundException(
+                            "Booking",
+                            bookingId.toString(),
+                            "bookingId"
+                    );
+                });
+
+        // 4. Verify booking belongs to current user
+        if (!booking.getUser().getUserId().equals(currentUserId)) {
+            log.debug(
+                    "User {} attempted to access booking {}",
+                    currentUserId,
+                    bookingId
+            );
+            throw new ResourceNotFoundException(
+                    "Booking",
+                    bookingId.toString(),
+                    "bookingId"
+            );
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new APIException("Booking is already cancelled");
+        }
+
+        // 5. Update the status
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        /*
+         * No bookingRepository.save() is required here.
+         *
+         * Because this entity was loaded inside the @Transactional
+         * persistence context, Hibernate tracks the change through
+         * dirty checking and generates the UPDATE during flush/commit.
+         */
+
+        log.info(
+                "Booking cancelled successfully. bookingId={}, userId={}",
+                bookingId,
+                currentUserId
+        );
+
+        return "Booking cancelled successfully!";
     }
 
 
@@ -403,7 +628,8 @@ public class BookingServiceImpl implements BookingService {
                         .toList();
 
         response.setSeats(seatResponses);
-
+        response.setCreatedAt(booking.getCreatedAt());
+        System.out.println("Hi : "+booking.getCreatedAt());
         return response;
     }
 
