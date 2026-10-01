@@ -11,14 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface BookingSeatRepository extends JpaRepository<BookingSeat, UUID> {
-    @Query(value = """
-    SELECT EXISTS (
-        SELECT 1 FROM booking_seats bs 
-        JOIN booking b ON bs.booking_id = b.booking_id
-        WHERE b.show_id = ?1 AND bs.seat_id = ?2
-    )
-    """, nativeQuery = true)
-    boolean existsByShowIdAndSeatId(UUID showId, UUID seatId);
 
     @Query(value = """
         SELECT bs.seat_id FROM
@@ -32,14 +24,12 @@ public interface BookingSeatRepository extends JpaRepository<BookingSeat, UUID> 
 
 
     @Query("""
-        SELECT bs
-        FROM BookingSeat bs
-        JOIN FETCH bs.seat
-        WHERE bs.booking.bookingId IN :bookingIds
-    """)
-    List<BookingSeat> findBookingSeatsWithSeats(
+    SELECT bs
+    FROM BookingSeat bs
+    JOIN FETCH bs.seat
+    WHERE bs.booking.bookingId IN :bookingIds
+""")
+    List<BookingSeat> findByBookingBookingIdIn(
             @Param("bookingIds") List<UUID> bookingIds
     );
-
-    List<BookingSeat> findByBookingBookingIdIn(List<UUID> bookingIds);
 }

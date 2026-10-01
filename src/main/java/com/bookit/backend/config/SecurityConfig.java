@@ -59,66 +59,33 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // Authentication
-                        .requestMatchers("/api/*/auth/**")
-                        .permitAll()
+                        // 1. Authentication Endpoints
+                        .requestMatchers("/api/*/auth/**").permitAll()
 
-                        // Public read APIs
-                        .requestMatchers(HttpMethod.GET, "/api/*/movies", "/api/*/movies/", "/api/*/movies/**")
-                        .permitAll()
+                        // 2. Public Read APIs (GET) - Cleaned up pattern matching
+                        .requestMatchers(HttpMethod.GET, "/api/*/movies", "/api/*/movies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/*/screens", "/api/*/screens/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/*/seats", "/api/*/seats/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/*/shows", "/api/*/shows/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/", "/api/*/theatres/**")
-                        .permitAll()
+                        // 3. Customer Booking Operations (Moved ABOVE Admin scopes to prevent interception)
+                        .requestMatchers(HttpMethod.GET, "/api/*/bookings", "/api/*/bookings/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/*/bookings", "/api/*/bookings/**").hasRole("CUSTOMER")
 
-                        .requestMatchers(HttpMethod.GET, "/api/*/theatres", "/api/*/theatres/", "/api/*/theatres/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/*/screens", "/api/*/screens/", "/api/*/screens/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/*/seats", "/api/*/seats/", "/api/*/seats/**")
-                        .permitAll()
-
-
-                        .requestMatchers(HttpMethod.GET, "/api/*/shows", "/api/*/shows/", "/api/*/shows/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/*/users")
-                        .hasRole("ADMIN")
-
-                        // Admin movie operations
-                        .requestMatchers("/api/*/movies/**")
-                        .hasRole("ADMIN")
-
-                        // Admin theatre operations
-                        .requestMatchers("/api/*/theatres/**")
-                        .hasRole("ADMIN")
-
-                        // Admin screen operations
-                        .requestMatchers("/api/*/screens/**")
-                        .hasRole("ADMIN")
-
-                        // Admin seat operations
-                        .requestMatchers("/api/*/seats/**")
-                        .hasRole("ADMIN")
-
-                        // Admin show operations
-                        .requestMatchers("/api/*/shows/**")
-                        .hasRole("ADMIN")
-
-                        // Admin user operations
-                        .requestMatchers("/api/*/user/**")
-                        .hasRole("ADMIN")
-
-                        // Customer booking operation
-                        .requestMatchers(HttpMethod.GET, "/api/*/bookings", "/api/*/bookings/", "/api/*/bookings/**")
-                        .hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/*/bookings", "/api/*/bookings/", "/api/*/bookings/**")
-                        .hasRole("CUSTOMER")
-                        // Everything else requires authentication
-                        .anyRequest()
-                        .authenticated()
+                        // 4. Admin Management Operations (Applies to POST, PUT, DELETE, etc.)
+                        .requestMatchers(HttpMethod.GET, "/api/*/users").hasRole("ADMIN")
+                        .requestMatchers("/api/*/movies/**").hasRole("ADMIN")
+                        .requestMatchers("/api/*/theatres/**").hasRole("ADMIN")
+                        .requestMatchers("/api/*/screens/**").hasRole("ADMIN")
+                        .requestMatchers("/api/*/seats/**").hasRole("ADMIN")
+                        .requestMatchers("/api/*/shows/**").hasRole("ADMIN")
+                        .requestMatchers("/api/*/user/**").hasRole("ADMIN")
+                        .requestMatchers("/error").permitAll()
+                        // 5. Secure Fallback for everything else
+                        .anyRequest().authenticated()
                 );
+
 
         http.addFilterBefore(
                 jwtAuthenticationFilter,

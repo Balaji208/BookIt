@@ -3,6 +3,7 @@ package com.bookit.backend.service;
 import com.bookit.backend.exception.APIException;
 import com.bookit.backend.exception.ResourceNotFoundException;
 import com.bookit.backend.model.*;
+import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.payload.booking.BookingCreateRequest;
 import com.bookit.backend.payload.booking.BookingResponse;
 import com.bookit.backend.payload.booking.BookingSeatResponse;
@@ -13,8 +14,13 @@ import com.bookit.backend.repository.ShowRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         bookingSeatRepository.saveAll(bookingSeats);
-        System.out.println("Down : " +booking.getCreatedAt());
+
         // 6. Build the API response
         return buildBookingResponse(
                 booking,
@@ -97,22 +103,33 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingResponse> getAllBookings() {
+    public PageResponse<BookingResponse> getAllBookings(
+            Integer pageNumber,
+            Integer pageSize,
+            String sortBy,
+            String sortOrder
+    ) {
         // 1. Get the currently authenticated user
         User user = userService.getCurrentUser();
 
         UUID userId = user.getUserId();
 
+        Sort sortAndOrder = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortAndOrder);
+
         // 2. Fetch all bookings for logged-in user
-        List<Booking> bookings = bookingRepository.findByUserUserId(userId);
+        Page<Booking> bookingPage = bookingRepository.findByUserUserId(userId, pageDetails);
 
         // No bookings -> return empty list
-        if (bookings.isEmpty()) {
-            return Collections.emptyList();
+        if (bookingPage.isEmpty()) {
+            return new PageResponse<BookingResponse>();
         }
 
         // 3. Extract all booking IDs
-        List<UUID> bookingIds = bookings.stream()
+        List<UUID> bookingIds = bookingPage.stream()
                 .map((booking) -> booking.getBookingId())
                 .toList();
 
@@ -149,7 +166,7 @@ public class BookingServiceImpl implements BookingService {
         // Convert bookings into response DTOs
         List<BookingResponse> bookingResponses = new ArrayList<>();
 
-        for(Booking booking : bookings) {
+        for(Booking booking : bookingPage.getContent()) {
 
             UUID bookingId = booking.getBookingId();
 
@@ -191,11 +208,23 @@ public class BookingServiceImpl implements BookingService {
             bookingResponse.setSeats(
                     bookingSeatResponses
             );
+            bookingResponse.setCreatedAt(
+                    booking.getCreatedAt()
+            );
 
             bookingResponses.add(bookingResponse);
         }
 
-        return bookingResponses;
+        PageResponse<BookingResponse> bookingResponsePage =
+                new PageResponse<>();
+
+        bookingResponsePage.setContent(bookingResponses);
+        bookingResponsePage.setTotalPages(bookingPage.getTotalPages());
+        bookingResponsePage.setPageSize(bookingPage.getSize());
+        bookingResponsePage.setPageNumber(bookingPage.getNumber());
+        bookingResponsePage.setTotalElements(bookingPage.getTotalElements());
+
+        return bookingResponsePage;
     }
 
     @Override
@@ -271,6 +300,8 @@ public class BookingServiceImpl implements BookingService {
         User currentUser = userService.getCurrentUser();
 
         UUID currentUserId = currentUser.getUserId();
+
+        log.info("1. Current user got user id : {}", currentUserId);
 
         // 3. Fetch booking
         Booking booking = bookingRepository.
@@ -629,7 +660,6 @@ public class BookingServiceImpl implements BookingService {
 
         response.setSeats(seatResponses);
         response.setCreatedAt(booking.getCreatedAt());
-        System.out.println("Hi : "+booking.getCreatedAt());
         return response;
     }
 

@@ -1,5 +1,6 @@
 package com.bookit.backend.service;
 
+import com.bookit.backend.payload.PageResponse;
 import com.bookit.backend.payload.booking.BookingCreateRequest;
 import com.bookit.backend.payload.booking.BookingResponse;
 import jakarta.validation.Valid;
@@ -12,7 +13,12 @@ import java.util.UUID;
 public interface BookingService {
     BookingResponse createBooking(@Valid BookingCreateRequest request);
 
-    List<BookingResponse> getAllBookings();
+    PageResponse<BookingResponse> getAllBookings(
+            Integer pageNumber,
+            Integer pageSize,
+            String sortBy,
+            String sortOrder
+    );
 
     BookingResponse getBookingDetails(UUID bookingId);
 
